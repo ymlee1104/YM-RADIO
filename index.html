@@ -180,16 +180,6 @@
     <div id="station-list"></div>
 
     <script>
-        (function() {
-            if (window.location.search.indexOf('popup=true') === -1) {
-                const width = 320;
-                const height = 800;
-                const left = (screen.width / 2) - (width / 2);
-                const top = (screen.height / 2) - (height / 2);
-                const features = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`;
-                window.open(window.location.href + '?popup=true', 'YM_RADIO_POPUP', features);
-            }
-        })();
 
         document.addEventListener('DOMContentLoaded', function () {
             const stations = [
@@ -388,4 +378,5 @@
     </script>
 </body>
 </html>
+
 
