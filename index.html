@@ -153,10 +153,7 @@
             overflow-y: auto;
             min-height: 0; 
             align-items: start; 
-            
-            /* ⬇️ (수정 2) 그리드 아이템들을 위쪽으로 정렬 (간격 벌어짐 방지) */
             align-content: start; 
-            
             flex-grow: 1; 
         }
 
@@ -307,6 +304,11 @@
             let currentCard = null;
             let currentFilter = 'radio'; 
 
+            // --- (수정 1) 모바일 스와이프 감지를 위한 변수 추가 ---
+            let touchStartX = 0;
+            let touchStartY = 0;
+            // ---------------------------------------------------
+
             stations.forEach(station => {
                 if (station.name.trim() === '') return;
                 const card = document.createElement('div');
@@ -403,6 +405,65 @@
                 }
             }
 
+            // --- (수정 2) 모바일 스와이프 이벤트 핸들러 함수 추가 ---
+            function handleTouchStart(e) {
+                // 방송 목록(stationList)에서 스크롤하는 것은 막지 않음
+                if (stationList.contains(e.target)) {
+                    touchStartX = 0; touchStartY = 0;
+                    return;
+                }
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+
+            function handleTouchMove(e) {
+                // 스와이프 시작점이 유효하지 않으면(목록 스크롤 중이면) 무시
+                if (touchStartX === 0 && touchStartY === 0) return;
+                
+                // 이 코드가 핵심: 모바일 브라우저의 기본 스크롤/볼륨 조절 동작을 막음
+                e.preventDefault();
+            }
+
+            function handleTouchEnd(e) {
+                if (touchStartX === 0 && touchStartY === 0) return;
+
+                let touchEndX = e.changedTouches[0].clientX;
+                let touchEndY = e.changedTouches[0].clientY;
+                
+                let deltaX = touchEndX - touchStartX;
+                let deltaY = touchEndY - touchStartY;
+                let absDeltaX = Math.abs(deltaX);
+                let absDeltaY = Math.abs(deltaY);
+                
+                // 최소 50px 이상 움직여야 스와이프로 인식
+                const minSwipeDistance = 50; 
+
+                if (absDeltaX > absDeltaY) {
+                    // 수평 스와이프 (볼륨 조절)
+                    if (absDeltaX > minSwipeDistance) {
+                        if (deltaX > 0) { // 오른쪽
+                            video.volume = Math.min(1, video.volume + 0.1);
+                        } else { // 왼쪽
+                            video.volume = Math.max(0, video.volume - 0.1);
+                        }
+                    }
+                } else {
+                    // 수직 스와이프 (채널 변경)
+                    if (absDeltaY > minSwipeDistance) {
+                        if (deltaY > 0) { // 아래
+                            changeChannel('down');
+                        } else { // 위
+                            changeChannel('up');
+                        }
+                    }
+                }
+                
+                // 다음 스와이프를 위해 초기화
+                touchStartX = 0;
+                touchStartY = 0;
+            }
+            // ------------------------------------------------------
+
 
             document.addEventListener('keydown', function(e) {
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -428,6 +489,13 @@
                     changeChannel('down');
                 }
             }, { passive: false }); 
+
+            // --- (수정 3) 모바일 스와이프 이벤트 리스너 등록 ---
+            // { passive: false } 옵션: preventDefault()를 호출하기 위해 필수
+            mainLayout.addEventListener('touchstart', handleTouchStart, { passive: false });
+            mainLayout.addEventListener('touchmove', handleTouchMove, { passive: false });
+            mainLayout.addEventListener('touchend', handleTouchEnd, { passive: false });
+            // --------------------------------------------------
 
             function unmuteAfterInteraction() {
                 if (video.muted) {
@@ -455,5 +523,3 @@
     </script>
 </body>
 </html>
-
-
