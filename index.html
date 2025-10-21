@@ -12,6 +12,7 @@
             --primary-text: #ffffff;
             --accent-color: #1db954;
             --hover-color: #282828;
+            --tab-inactive: #555;
         }
 
         ::-webkit-scrollbar { width: 5px; }
@@ -112,15 +113,51 @@
             font-size: 0.85rem; color: #999;
             text-align: center;
         }
+        
+        /* ⬇️ (새로 추가) 탭 컨테이너 스타일 */
+        #tab-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem; /* 탭과 목록 사이 간격 */
+            flex-shrink: 0; /* 크기 고정 */
+        }
+        
+        /* ⬇️ (새로 추가) 탭 버튼 스타일 */
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: var(--tab-inactive);
+            color: var(--primary-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        
+        /* ⬇️ (새로 추가) 활성화된 탭 버튼 스타일 */
+        .tab-button.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: bold;
+        }
 
+        /* ⬇️ (수정) station-list를 감싸는 컨테이너 추가 및 스타일 적용 */
+        #station-list-container {
+             display: flex;
+             flex-direction: column; /* 내부 요소(탭, 목록)를 수직 정렬 */
+             flex-grow: 1;
+             min-height: 0; /* 높이 계산 오류 방지 */
+        }
+        
         #station-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 0.8rem;
-            flex-grow: 1;
             overflow-y: auto;
             min-height: 0; 
             align-items: start; 
+            flex-grow: 1; /* 남은 공간 모두 차지 */
         }
 
         .station-card {
@@ -132,6 +169,12 @@
             transition: background-color 0.2s ease, transform 0.2s ease;
             font-weight: 500;
             font-size: 0.9rem;
+            display: none; /* 기본적으로 숨김 */
+        }
+        
+        /* ⬇️ (새로 추가) 보여줄 카드만 display: block */
+        .station-card.visible {
+            display: block;
         }
 
         .station-card:active { transform: scale(0.96); }
@@ -152,7 +195,8 @@
                 resize: horizontal;
                 align-self: start; 
             }
-            #station-list {
+            /* ⬇️ (수정) station-list -> station-list-container */
+            #station-list-container {
                 flex: 1; 
             }
         }
@@ -181,79 +225,73 @@
                 채널: ↑/↓  |  볼륨: ←/→  |  음소거: M
             </div>
         </div>
-
-        <div id="station-list"></div>
+        
+        <div id="station-list-container">
+            <div id="tab-container">
+                <button class="tab-button active" data-type="radio">RADIO</button>
+                <button class="tab-button" data-type="iptv">ipTV</button>
+            </div>
+            
+            <div id="station-list"></div>
+        </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ⬇️ (수정) 각 방송국에 type: 'radio' 또는 'iptv' 추가
             const stations = [
-                // (방송국 목록은 동일)
-                { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8' },
-                { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8' },
-                { name: 'CBS JOY4U', url: 'https://m-aac.cbs.co.kr/mweb_cbscmc/_definst_/cbscmc.stream/chunklist.m3u8' },
-                { name: 'YTN 라디오', url: 'https://radiolive.ytn.co.kr/radio/_definst_/20211118_fmlive/playlist.m3u8' },
-                { name: 'OBS 라디오', url: 'https://vod3.obs.co.kr:444/live/obsstream1/radio.stream/playlist.m3u8' },
-                { name: 'EBS FM', url: 'https://ebsonair.ebs.co.kr/fmradiofamilypc/familypc1m/playlist.m3u8' },
-                { name: 'TBS FM', url: 'https://cdnfm.tbs.seoul.kr/tbs/_definst_/tbs_fm_web_360.smil/playlist.m3u8' },
-                { name: 'TBS eFM', url: 'https://cdnefm.tbs.seoul.kr/tbs/_definst_/tbs_efm_web_360.smil/playlist.m3u8' },
-                { name: 'TBN 경인교통방송', url: 'https://5cc6beb04faf6.streamlock.net/gyeongin/myStream/playlist.m3u8' },
-                { name: 'iFM 경인방송', url: 'https://stream.ifm.kr/live/aod1/playlist.m3u8' },
-                { name: 'EBS1TV', url: 'https://ebsonair.ebs.co.kr/ebs1familypc/familypc1m/playlist.m3u8' },
-                { name: 'EBS2TV', url: 'https://ebsonair.ebs.co.kr/ebs2familypc/familypc1m/playlist.m3u8' },
-                { name: 'EBSEnglish', url: 'https://ebsonair.ebs.co.kr/plus3familypc/familypc1m/playlist.m3u8' },
-                { name: 'EBSKids', url: 'https://ebsonair.ebs.co.kr/ebsufamilypc/familypc1m/playlist.m3u8' },
-                { name: 'EBSPlus1', url: 'https://ebsonair.ebs.co.kr/plus1familypc/familypc1m/playlist.m3u8' },
-                { name: 'EBSPlus2', url: 'https://ebsonair.ebs.co.kr/plus2familypc/familypc1m/playlist.m3u8' },
-                { name: 'OUN', url: 'https://live.knou.ac.kr/knou1/live1/playlist.m3u8' },
-                { name: 'TBSTV', url: 'https://cdntv.tbs.seoul.kr/tbs/tbs_tv_web.smil/playlist.m3u8' },
-                { name: 'WBC복지TV', url: 'https://cdnlive179.smartucc.kr/smartlive/312/46324be24454bd98f785039457ac695d/playlist.m3u8' },
-                { name: '국악TV', url: 'https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8' },
-                { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8' },
-                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly4534y7dm2xfa123r2_tv/index.m3u8' },
-                { name: 'SBS_UBC', url: 'https://stream.ubc.co.kr/hls/ubctvstream/index.m3u8' },
-                { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8' },
-                { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8' },
-                { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8' },
-                { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8' },
-                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8' },
-                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8' },
-                { name: 'CJOnStyle', url: 'https://live-ch1.cjonstyle.net/cjmalllive/stream2/playlist.m3u8' },
-                { name: 'CJOnStyle+', url: 'https://live-ch2.cjonstyle.net/cjosplus/live2/playlist.m3u8' },
-                { name: 'GS My Shop', url: 'https://gstv-myshop.gsshop.com/myshop_hd/myshop_hd.stream/playlist.m3u8' },
-                { name: 'GS Shop', url: 'https://gstv-gsshop.gsshop.com/gsshop_hd/gsshop_hd.stream/playlist.m3u8' },
-                { name: '공영쇼핑', url: 'https://etv.publichs.com/live5.stream/playlist.m3u8' },
-                { name: '현대쇼핑 Hmall', url: 'https://livejj.hyundaihmall.com:8443/live/ngrp:hmall.stream_pc/playlist.m3u8' },
-                { name: '현대쇼핑 Plus#', url: 'https://dtvstreaming.hyundaihmall.com/newcjp3/_definst_/newcjpstream.smil/playlist.m3u8' },
-                { name: '롯데홈쇼핑', url: 'https://pchlslivesw.lotteimall.com/live/livestream/lotteimalllive_mp4.m3u8' },
-                { name: '롯데OneTV', url: 'https://onetvhlslive.lotteimall.com/lotteonetvlive/lotteonetvlive.mp4.m3u8' },
-                { name: 'NS홈쇼핑', url: 'https://livestream.nsmall.com/IPHONE/nsmallMobile.m3u8' },
-                { name: 'NSShop+', url: 'https://shoppstream.nsmall.com/IPHONE/mobile.m3u8' },
-                { name: '신세계 TV쇼핑', url: 'https://liveout.catenoid.net/live-02-shinsegaetvshopping/shinsegaetvshopping_720p/playlist.m3u8' },
-                { name: '더블유쇼핑', url: 'https://liveout.catenoid.net/live-05-wshopping/wshopping_1500k/playlist.m3u8' },
-                { name: '홈&쇼핑', url: 'https://s28.qtcdn.co.kr/media/liveM3U8/idx/518045142/enc/1860408350/playlist.m3u8' },
-                { name: '쇼핑NT', url: 'https://live.shoppingntmall.com/live/10011.m3u8' },
-                { name: '종교 FGTV', url: 'https://fgtvlive.fgtv.com/smil:fgtv.smil/playlist.m3u8' },
-                { name: '종교 CGN', url: 'https://du35ivadp6cxj.cloudfront.net/out/v1/81781d23cbbf490990b2aa9181d4ce19/CGNWebLiveKR.m3u8' },
-                { name: 'MNBWorld', url: 'https://cdn4.skygo.mn/live/disk1/MNB_World/HLSv3-FTA/MNB_World.m3u8' },
-                { name: 'AJE', url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8' },
-                { name: 'ABN(외국)', url: 'https://mediaserver.abnvideos.com/streams/abnafghanistan.m3u8' },
-                { name: 'P Korea', url: 'https://korhls.persiana.live/hls/stream.m3u8' },
-                { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8' },
-                { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8' },
-                { name: 'MBC_CXD', url: 'https://5ee9633b25727.streamlock.net/jmbc_tv/_definst_/jmbc_tv.stream/playlist.m3u8' },
-                { name: 'SBS_JTV', url: 'http://61.85.197.53:1935/jtv_live/myStream/playlist.m3u8' },
-                { name: 'TVChosun', url: 'http://onair.cdn.tvchosun.com/origin1/_definst_/tvchosun_s1/playlist.m3u8' },
-                { name: 'TVChosun2', url: 'http://onair2.cdn.tvchosun.com/origin2/_definst_/tvchosun_s3/playlist.m3u8' },
-                { name: 'ArirangRadio', url: 'http://amdlive-ch01.ctnd.com.edgesuite.net/arirang_3ch/smil:arirang_3ch.smil/playlist.m3u8' },
-                { name: 'ArirangTV', url: 'http://amdlive-ch01.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8' },
-                { name: 'KCTV', url: 'http://119.77.96.184:1935/chn05/chn05/playlist.m3u8' },
-                { name: '국방TV', url: 'http://mediaworks.dema.mil.kr:1935/live_edge/cudo.sdp/playlist.m3u8' },
-                { name: 'SBS_G1', url: 'http://61.82.49.4:1935/live/_definst_/tv.stream/playlist.m3u8' },
-                { name: 'SBS_JIBS', url: 'http://123.140.197.22/stream/1/play.m3u8' },
-                { name: '종교 GCN', url: 'http://liveko24-manminglobal3.ktcdn.co.kr/liveko24/gcnko_1300k.stream/playlist.m3u8' },
-                { name: '종교 GOOD TV', url: 'http://mobliestream.c3tv.com:1935/live/goodtv.sdp/playlist.m3u8' },
-                { name: '종교 RUTC', url: 'http://d26sxnc75smwvh.cloudfront.net/livehttporigin/rutclive_720p2.stream/playlist.m3u8' },
+                // 라디오 채널
+                { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'CBS JOY4U', url: 'https://m-aac.cbs.co.kr/mweb_cbscmc/_definst_/cbscmc.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'YTN 라디오', url: 'https://radiolive.ytn.co.kr/radio/_definst_/20211118_fmlive/playlist.m3u8', type: 'radio' },
+                { name: 'OBS 라디오', url: 'https://vod3.obs.co.kr:444/live/obsstream1/radio.stream/playlist.m3u8', type: 'radio' },
+                { name: 'EBS FM', url: 'https://ebsonair.ebs.co.kr/fmradiofamilypc/familypc1m/playlist.m3u8', type: 'radio' },
+                { name: 'TBS FM', url: 'https://cdnfm.tbs.seoul.kr/tbs/_definst_/tbs_fm_web_360.smil/playlist.m3u8', type: 'radio' },
+                { name: 'TBS eFM', url: 'https://cdnefm.tbs.seoul.kr/tbs/_definst_/tbs_efm_web_360.smil/playlist.m3u8', type: 'radio' },
+                { name: 'TBN 경인교통방송', url: 'https://5cc6beb04faf6.streamlock.net/gyeongin/myStream/playlist.m3u8', type: 'radio' },
+                { name: 'iFM 경인방송', url: 'https://stream.ifm.kr/live/aod1/playlist.m3u8', type: 'radio' },
+                
+                // IPTV 채널
+                { name: 'EBS1TV', url: 'https://ebsonair.ebs.co.kr/ebs1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBS2TV', url: 'https://ebsonair.ebs.co.kr/ebs2familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSEnglish', url: 'https://ebsonair.ebs.co.kr/plus3familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSKids', url: 'https://ebsonair.ebs.co.kr/ebsufamilypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSPlus1', url: 'https://ebsonair.ebs.co.kr/plus1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSPlus2', url: 'https://ebsonair.ebs.co.kr/plus2familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'OUN', url: 'https://live.knou.ac.kr/knou1/live1/playlist.m3u8', type: 'iptv' },
+                { name: 'TBSTV', url: 'https://cdntv.tbs.seoul.kr/tbs/tbs_tv_web.smil/playlist.m3u8', type: 'iptv' },
+                { name: 'WBC복지TV', url: 'https://cdnlive179.smartucc.kr/smartlive/312/46324be24454bd98f785039457ac695d/playlist.m3u8', type: 'iptv' },
+                { name: '국악TV', url: 'https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly4534y7dm2xfa123r2_tv/index.m3u8', type: 'iptv' },
+                { name: 'SBS_UBC', url: 'https://stream.ubc.co.kr/hls/ubctvstream/index.m3u8', type: 'iptv' },
+                { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'iptv' },
+                { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
+                { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8', type: 'iptv' },
+                { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' },
+                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' },
+                { name: 'CJOnStyle', url: 'https://live-ch1.cjonstyle.net/cjmalllive/stream2/playlist.m3u8', type: 'iptv' },
+                { name: 'CJOnStyle+', url: 'https://live-ch2.cjonstyle.net/cjosplus/live2/playlist.m3u8', type: 'iptv' },
+                { name: 'GS My Shop', url: 'https://gstv-myshop.gsshop.com/myshop_hd/myshop_hd.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'GS Shop', url: 'https://gstv-gsshop.gsshop.com/gsshop_hd/gsshop_hd.stream/playlist.m3u8', type: 'iptv' },
+                { name: '공영쇼핑', url: 'https://etv.publichs.com/live5.stream/playlist.m3u8', type: 'iptv' },
+                { name: '현대쇼핑 Hmall', url: 'https://livejj.hyundaihmall.com:8443/live/ngrp:hmall.stream_pc/playlist.m3u8', type: 'iptv' },
+                { name: '현대쇼핑 Plus#', url: 'https://dtvstreaming.hyundaihmall.com/newcjp3/_definst_/newcjpstream.smil/playlist.m3u8', type: 'iptv' },
+                { name: '롯데홈쇼핑', url: 'https://pchlslivesw.lotteimall.com/live/livestream/lotteimalllive_mp4.m3u8', type: 'iptv' },
+                { name: '롯데OneTV', url: 'https://onetvhlslive.lotteimall.com/lotteonetvlive/lotteonetvlive.mp4.m3u8', type: 'iptv' },
+                { name: 'NS홈쇼핑', url: 'https://livestream.nsmall.com/IPHONE/nsmallMobile.m3u8', type: 'iptv' },
+                { name: 'NSShop+', url: 'https://shoppstream.nsmall.com/IPHONE/mobile.m3u8', type: 'iptv' },
+                { name: '신세계 TV쇼핑', url: 'https://liveout.catenoid.net/live-02-shinsegaetvshopping/shinsegaetvshopping_720p/playlist.m3u8', type: 'iptv' },
+                { name: '더블유쇼핑', url: 'https://liveout.catenoid.net/live-05-wshopping/wshopping_1500k/playlist.m3u8', type: 'iptv' },
+                { name: '홈&쇼핑', url: 'https://s28.qtcdn.co.kr/media/liveM3U8/idx/518045142/enc/1860408350/playlist.m3u8', type: 'iptv' },
+                { name: '쇼핑NT', url: 'https://live.shoppingntmall.com/live/10011.m3u8', type: 'iptv' },
+                { name: '종교 FGTV', url: 'https://fgtvlive.fgtv.com/smil:fgtv.smil/playlist.m3u8', type: 'iptv' },
+                { name: '종교 CGN', url: 'https://du35ivadp6cxj.cloudfront.net/out/v1/81781d23cbbf490990b2aa9181d4ce19/CGNWebLiveKR.m3u8', type: 'iptv' },
+                { name: 'MNBWorld', url: 'https://cdn4.skygo.mn/live/disk1/MNB_World/HLSv3-FTA/MNB_World.m3u8', type: 'iptv' },
+                { name: 'AJE', url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8', type: 'iptv' },
+                { name: 'ABN(외국)', url: 'https://mediaserver.abnvideos.com/streams/abnafghanistan.m3u8', type: 'iptv' },
             ];
 
             const video = document.getElementById('radio-player');
@@ -261,8 +299,12 @@
             const nowPlaying = document.getElementById('now-playing');
             const videoWrapper = document.getElementById('video-wrapper');
             const mainLayout = document.getElementById('main-layout'); 
+            const tabContainer = document.getElementById('tab-container'); // 탭 컨테이너
+            const tabButtons = tabContainer.querySelectorAll('.tab-button'); // 탭 버튼들
+            
             let hls = new Hls();
             let currentCard = null;
+            let currentFilter = 'radio'; // 현재 활성화된 탭 타입
 
             stations.forEach(station => {
                 if (station.name.trim() === '') return;
@@ -271,8 +313,37 @@
                 card.textContent = station.name;
                 card.dataset.url = station.url;
                 card.dataset.name = station.name;
+                card.dataset.type = station.type; // ⬇️ 카드에 타입 데이터 추가
                 stationList.appendChild(card);
             });
+            
+            // ⬇️ (새로 추가) 탭 클릭 이벤트 처리
+            tabContainer.addEventListener('click', function(e) {
+                const button = e.target.closest('.tab-button');
+                if (button && !button.classList.contains('active')) {
+                    // 모든 버튼에서 active 클래스 제거
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    // 클릭된 버튼에 active 클래스 추가
+                    button.classList.add('active');
+                    currentFilter = button.dataset.type;
+                    filterStations(currentFilter);
+                    
+                    // 탭 변경 시 해당 탭의 첫 방송 자동 재생 (음소거 상태 유지)
+                    playFirstVisibleStation();
+                }
+            });
+            
+            // ⬇️ (새로 추가) 방송국 필터링 함수
+            function filterStations(type) {
+                const allCards = stationList.querySelectorAll('.station-card');
+                allCards.forEach(card => {
+                    if (card.dataset.type === type) {
+                        card.classList.add('visible'); // visible 클래스 추가하여 보이게 함
+                    } else {
+                        card.classList.remove('visible'); // 다른 타입은 숨김
+                    }
+                });
+            }
 
             stationList.addEventListener('click', function (e) {
                 const card = e.target.closest('.station-card');
@@ -282,11 +353,12 @@
                     videoWrapper.classList.remove('audio-only');
                     playStream(url);
                     nowPlaying.textContent = `▶ ${name}`;
-                    if (currentCard) {
-                        currentCard.classList.remove('active');
-                    }
-                    currentCard = card;
-                    currentCard.classList.add('active');
+                    
+                    // 현재 보이는 카드 중에서 active 클래스 관리
+                    const visibleCards = stationList.querySelectorAll('.station-card.visible');
+                    visibleCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    currentCard = card; // 현재 선택된 카드 업데이트
                 }
             });
 
@@ -312,20 +384,24 @@
             });
 
             function changeChannel(direction) {
-                const allCards = Array.from(stationList.querySelectorAll('.station-card'));
-                if (allCards.length === 0) return; 
-                const lastIndex = allCards.length - 1;
+                // ⬇️ (수정) 현재 보이는 카드 목록만 가져옴
+                const visibleCards = Array.from(stationList.querySelectorAll('.station-card.visible'));
+                if (visibleCards.length === 0) return; 
+                
+                const lastIndex = visibleCards.length - 1;
                 let currentIndex = -1;
                 if (currentCard) {
-                    currentIndex = allCards.indexOf(currentCard);
+                    currentIndex = visibleCards.indexOf(currentCard);
                 }
+                
                 let nextIndex;
                 if (direction === 'down') {
-                    nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % allCards.length;
+                    nextIndex = (currentIndex === -1 || currentIndex === lastIndex) ? 0 : currentIndex + 1;
                 } else { // 'up'
-                    nextIndex = (currentIndex === -1) ? lastIndex : (currentIndex - 1 + allCards.length) % allCards.length;
+                    nextIndex = (currentIndex <= 0) ? lastIndex : currentIndex - 1;
                 }
-                const nextCard = allCards[nextIndex];
+                
+                const nextCard = visibleCards[nextIndex];
                 if (nextCard) {
                     nextCard.click(); 
                     nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
@@ -357,31 +433,30 @@
                 }
             }, { passive: false }); 
 
-
-            // ⬇️ (새로 추가) 첫 상호작용 시 음소거 해제
             function unmuteAfterInteraction() {
                 if (video.muted) {
                     video.muted = false;
                 }
             }
-            // 'once: true' 옵션으로 클릭, 키다운, 휠, 터치 시 딱 한 번만 실행됨
             const unmuteOptions = { once: true };
             document.addEventListener('click', unmuteAfterInteraction, unmuteOptions);
             document.addEventListener('keydown', unmuteAfterInteraction, unmuteOptions);
             document.addEventListener('wheel', unmuteAfterInteraction, unmuteOptions);
             document.addEventListener('touchstart', unmuteAfterInteraction, unmuteOptions);
 
-
-            // 첫 번째 방송 자동 재생
-            const allStations = stationList.querySelectorAll('.station-card');
-            const defaultStationIndex = 0; // 0 = 첫 번째 방송
-            
-            if (allStations.length > defaultStationIndex) {
-                allStations[defaultStationIndex].click();
+            // ⬇️ (새로 추가) 현재 보이는 첫 방송 재생 함수
+            function playFirstVisibleStation() {
+                const firstVisibleStation = stationList.querySelector('.station-card.visible');
+                if (firstVisibleStation) {
+                    firstVisibleStation.click();
+                }
             }
+
+            // 초기 로드 시 라디오 탭 필터링 및 첫 방송 자동 재생
+            filterStations(currentFilter); // 'radio'
+            playFirstVisibleStation();
 
         });
     </script>
 </body>
 </html>
-
