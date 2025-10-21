@@ -50,16 +50,21 @@
             gap: 1rem;
             padding: 0 1rem 1rem 1rem;
             box-sizing: border-box;
+
+            width: 100%;
+            /* --- (수정 1) 앱 전체의 max-width 및 margin 제거 --- */
+            /* max-width: 1920px; (제거) */
+            /* margin: 0 auto; (제거) */
+            /* --------------------------------------------- */
         }
 
         #player-column {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            overflow: auto; 
-            resize: vertical; 
+            overflow: auto; /* 모바일(세로) 기본 */
+            resize: vertical; /* 모바일(세로) 기본 */
             min-height: 300px; 
-            align-self: start;
         }
         
         #player-container {
@@ -186,13 +191,17 @@
                 flex-direction: row; 
             }
             #player-column {
-                flex: 0 0 75%; 
+                /* --- (수정 2) 75% 고정 -> 남은 공간 전체 사용 --- */
+                flex: 1; 
+                /* ----------------------------------------- */
                 min-width: 320px; 
                 resize: horizontal;
-                align-self: start; 
+                overflow: visible; 
             }
             #station-list-container {
-                flex: 1; 
+                /* --- (수정 3) 남은 공간 -> 480px 고정 너비 --- */
+                flex: 0 0 480px; 
+                /* --------------------------------------- */
             }
         }
     </style>
@@ -234,7 +243,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const stations = [
-                // (방송국 목록 및 type 구분은 동일)
+                // (방송국 목록은 이전과 동일)
                  // 라디오 채널
                 { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8', type: 'radio' },
                 { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8', type: 'radio' },
@@ -259,7 +268,7 @@
                 { name: 'WBC복지TV', url: 'https://cdnlive179.smartucc.kr/smartlive/312/46324be24454bd98f785039457ac695d/playlist.m3u8', type: 'iptv' },
                 { name: '국악TV', url: 'https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8', type: 'iptv' },
                 { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8', type: 'iptv' },
-                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly4534y7dm2xfa123r2_tv/index.m3u8', type: 'iptv' },
+                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly454y7dm2xfa123r2_tv/index.m3u8', type: 'iptv' },
                 { name: 'SBS_UBC', url: 'https://stream.ubc.co.kr/hls/ubctvstream/index.m3u8', type: 'iptv' },
                 { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'iptv' },
                 { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
@@ -304,10 +313,8 @@
             let currentCard = null;
             let currentFilter = 'radio'; 
 
-            // --- (수정 1) 모바일 스와이프 감지를 위한 변수 추가 ---
             let touchStartX = 0;
             let touchStartY = 0;
-            // ---------------------------------------------------
 
             stations.forEach(station => {
                 if (station.name.trim() === '') return;
@@ -385,16 +392,14 @@
                 
                 const lastIndex = visibleCards.length - 1;
                 let currentIndex = -1;
-                if (currentCard && visibleCards.includes(currentCard)) { // 현재 카드가 보이는 목록에 있는지 확인
+                if (currentCard && visibleCards.includes(currentCard)) { 
                     currentIndex = visibleCards.indexOf(currentCard);
                 }
                 
                 let nextIndex;
                 if (direction === 'down') {
-                    // 현재 선택이 없거나 마지막이면 0번으로, 아니면 다음으로
                     nextIndex = (currentIndex === -1 || currentIndex === lastIndex) ? 0 : currentIndex + 1;
                 } else { // 'up'
-                    // 현재 선택이 없거나 첫번째면 마지막으로, 아니면 이전으로
                     nextIndex = (currentIndex === -1 || currentIndex === 0) ? lastIndex : currentIndex - 1;
                 }
                 
@@ -405,9 +410,7 @@
                 }
             }
 
-            // --- (수정 2) 모바일 스와이프 이벤트 핸들러 함수 추가 ---
             function handleTouchStart(e) {
-                // 방송 목록(stationList)에서 스크롤하는 것은 막지 않음
                 if (stationList.contains(e.target)) {
                     touchStartX = 0; touchStartY = 0;
                     return;
@@ -417,10 +420,7 @@
             }
 
             function handleTouchMove(e) {
-                // 스와이프 시작점이 유효하지 않으면(목록 스크롤 중이면) 무시
                 if (touchStartX === 0 && touchStartY === 0) return;
-                
-                // 이 코드가 핵심: 모바일 브라우저의 기본 스크롤/볼륨 조절 동작을 막음
                 e.preventDefault();
             }
 
@@ -431,39 +431,33 @@
                 let touchEndY = e.changedTouches[0].clientY;
                 
                 let deltaX = touchEndX - touchStartX;
-                let deltaY = touchEndY - touchStartY;
+                let deltaY = touchEndY - startY;
                 let absDeltaX = Math.abs(deltaX);
                 let absDeltaY = Math.abs(deltaY);
                 
-                // 최소 50px 이상 움직여야 스와이프로 인식
                 const minSwipeDistance = 50; 
 
                 if (absDeltaX > absDeltaY) {
-                    // 수평 스와이프 (볼륨 조절)
                     if (absDeltaX > minSwipeDistance) {
-                        if (deltaX > 0) { // 오른쪽
+                        if (deltaX > 0) { 
                             video.volume = Math.min(1, video.volume + 0.1);
-                        } else { // 왼쪽
+                        } else { 
                             video.volume = Math.max(0, video.volume - 0.1);
                         }
                     }
                 } else {
-                    // 수직 스와이프 (채널 변경)
                     if (absDeltaY > minSwipeDistance) {
-                        if (deltaY > 0) { // 아래
+                        if (deltaY > 0) { 
                             changeChannel('down');
-                        } else { // 위
+                        } else { 
                             changeChannel('up');
                         }
                     }
                 }
                 
-                // 다음 스와이프를 위해 초기화
                 touchStartX = 0;
                 touchStartY = 0;
             }
-            // ------------------------------------------------------
-
 
             document.addEventListener('keydown', function(e) {
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -490,12 +484,9 @@
                 }
             }, { passive: false }); 
 
-            // --- (수정 3) 모바일 스와이프 이벤트 리스너 등록 ---
-            // { passive: false } 옵션: preventDefault()를 호출하기 위해 필수
             mainLayout.addEventListener('touchstart', handleTouchStart, { passive: false });
             mainLayout.addEventListener('touchmove', handleTouchMove, { passive: false });
             mainLayout.addEventListener('touchend', handleTouchEnd, { passive: false });
-            // --------------------------------------------------
 
             function unmuteAfterInteraction() {
                 if (video.muted) {
@@ -515,8 +506,7 @@
                 }
             }
 
-            // 초기 로드 시 라디오 탭 필터링 및 첫 방송 자동 재생
-            filterStations(currentFilter); // 'radio'
+            filterStations(currentFilter);
             playFirstVisibleStation();
 
         });
