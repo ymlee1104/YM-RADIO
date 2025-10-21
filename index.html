@@ -114,15 +114,13 @@
             text-align: center;
         }
         
-        /* ⬇️ (새로 추가) 탭 컨테이너 스타일 */
         #tab-container {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.8rem; /* 탭과 목록 사이 간격 */
-            flex-shrink: 0; /* 크기 고정 */
+            margin-bottom: 0.8rem; 
+            flex-shrink: 0; 
         }
         
-        /* ⬇️ (새로 추가) 탭 버튼 스타일 */
         .tab-button {
             padding: 0.5rem 1rem;
             border: none;
@@ -135,19 +133,17 @@
             transition: background-color 0.2s ease;
         }
         
-        /* ⬇️ (새로 추가) 활성화된 탭 버튼 스타일 */
         .tab-button.active {
             background-color: var(--accent-color);
             color: var(--bg-color);
             font-weight: bold;
         }
 
-        /* ⬇️ (수정) station-list를 감싸는 컨테이너 추가 및 스타일 적용 */
         #station-list-container {
              display: flex;
-             flex-direction: column; /* 내부 요소(탭, 목록)를 수직 정렬 */
+             flex-direction: column; 
              flex-grow: 1;
-             min-height: 0; /* 높이 계산 오류 방지 */
+             min-height: 0; 
         }
         
         #station-list {
@@ -157,7 +153,11 @@
             overflow-y: auto;
             min-height: 0; 
             align-items: start; 
-            flex-grow: 1; /* 남은 공간 모두 차지 */
+            
+            /* ⬇️ (수정 2) 그리드 아이템들을 위쪽으로 정렬 (간격 벌어짐 방지) */
+            align-content: start; 
+            
+            flex-grow: 1; 
         }
 
         .station-card {
@@ -169,10 +169,9 @@
             transition: background-color 0.2s ease, transform 0.2s ease;
             font-weight: 500;
             font-size: 0.9rem;
-            display: none; /* 기본적으로 숨김 */
+            display: none; 
         }
         
-        /* ⬇️ (새로 추가) 보여줄 카드만 display: block */
         .station-card.visible {
             display: block;
         }
@@ -195,7 +194,6 @@
                 resize: horizontal;
                 align-self: start; 
             }
-            /* ⬇️ (수정) station-list -> station-list-container */
             #station-list-container {
                 flex: 1; 
             }
@@ -228,8 +226,8 @@
         
         <div id="station-list-container">
             <div id="tab-container">
-                <button class="tab-button active" data-type="radio">RADIO</button>
-                <button class="tab-button" data-type="iptv">ipTV</button>
+                <button class="tab-button active" data-type="radio">📻 RADIO</button>
+                <button class="tab-button" data-type="iptv">📺 ipTV</button>
             </div>
             
             <div id="station-list"></div>
@@ -238,9 +236,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ⬇️ (수정) 각 방송국에 type: 'radio' 또는 'iptv' 추가
             const stations = [
-                // 라디오 채널
+                // (방송국 목록 및 type 구분은 동일)
+                 // 라디오 채널
                 { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8', type: 'radio' },
                 { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8', type: 'radio' },
                 { name: 'CBS JOY4U', url: 'https://m-aac.cbs.co.kr/mweb_cbscmc/_definst_/cbscmc.stream/chunklist.m3u8', type: 'radio' },
@@ -251,6 +249,7 @@
                 { name: 'TBS eFM', url: 'https://cdnefm.tbs.seoul.kr/tbs/_definst_/tbs_efm_web_360.smil/playlist.m3u8', type: 'radio' },
                 { name: 'TBN 경인교통방송', url: 'https://5cc6beb04faf6.streamlock.net/gyeongin/myStream/playlist.m3u8', type: 'radio' },
                 { name: 'iFM 경인방송', url: 'https://stream.ifm.kr/live/aod1/playlist.m3u8', type: 'radio' },
+                { name: 'ArirangRadio', url: 'http://amdlive-ch01.ctnd.com.edgesuite.net/arirang_3ch/smil:arirang_3ch.smil/playlist.m3u8', type: 'radio' },
                 
                 // IPTV 채널
                 { name: 'EBS1TV', url: 'https://ebsonair.ebs.co.kr/ebs1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
@@ -270,8 +269,8 @@
                 { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
                 { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8', type: 'iptv' },
                 { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8', type: 'iptv' },
-                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' },
-                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' },
+                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' }, 
+                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' }, 
                 { name: 'CJOnStyle', url: 'https://live-ch1.cjonstyle.net/cjmalllive/stream2/playlist.m3u8', type: 'iptv' },
                 { name: 'CJOnStyle+', url: 'https://live-ch2.cjonstyle.net/cjosplus/live2/playlist.m3u8', type: 'iptv' },
                 { name: 'GS My Shop', url: 'https://gstv-myshop.gsshop.com/myshop_hd/myshop_hd.stream/playlist.m3u8', type: 'iptv' },
@@ -292,6 +291,19 @@
                 { name: 'MNBWorld', url: 'https://cdn4.skygo.mn/live/disk1/MNB_World/HLSv3-FTA/MNB_World.m3u8', type: 'iptv' },
                 { name: 'AJE', url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8', type: 'iptv' },
                 { name: 'ABN(외국)', url: 'https://mediaserver.abnvideos.com/streams/abnafghanistan.m3u8', type: 'iptv' },
+                { name: 'P Korea', url: 'https://korhls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
+                { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
+                { name: 'TVChosun', url: 'http://onair.cdn.tvchosun.com/origin1/_definst_/tvchosun_s1/playlist.m3u8', type: 'iptv' },
+                { name: 'TVChosun2', url: 'http://onair2.cdn.tvchosun.com/origin2/_definst_/tvchosun_s3/playlist.m3u8', type: 'iptv' },
+                { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_JTV', url: 'http://61.85.197.53:1935/jtv_live/myStream/playlist.m3u8', type: 'iptv' },
+                { name: 'ArirangTV', url: 'http://amdlive-ch01.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8', type: 'iptv' },
+                { name: 'KCTV', url: 'http://119.77.96.184:1935/chn05/chn05/playlist.m3u8', type: 'iptv' }, 
+                { name: '국방TV', url: 'http://mediaworks.dema.mil.kr:1935/live_edge/cudo.sdp/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_G1', url: 'http://61.82.49.4:1935/live/_definst_/tv.stream/playlist.m3u8', type: 'iptv' },
+                { name: '종교 GCN', url: 'http://liveko24-manminglobal3.ktcdn.co.kr/liveko24/gcnko_1300k.stream/playlist.m3u8', type: 'iptv' },
+                { name: '종교 GOOD TV', url: 'http://mobliestream.c3tv.com:1935/live/goodtv.sdp/playlist.m3u8', type: 'iptv' },
+                { name: '종교 RUTC', url: 'http://d26sxnc75smwvh.cloudfront.net/livehttporigin/rutclive_720p2.stream/playlist.m3u8', type: 'iptv' },
             ];
 
             const video = document.getElementById('radio-player');
@@ -299,12 +311,12 @@
             const nowPlaying = document.getElementById('now-playing');
             const videoWrapper = document.getElementById('video-wrapper');
             const mainLayout = document.getElementById('main-layout'); 
-            const tabContainer = document.getElementById('tab-container'); // 탭 컨테이너
-            const tabButtons = tabContainer.querySelectorAll('.tab-button'); // 탭 버튼들
+            const tabContainer = document.getElementById('tab-container'); 
+            const tabButtons = tabContainer.querySelectorAll('.tab-button'); 
             
             let hls = new Hls();
             let currentCard = null;
-            let currentFilter = 'radio'; // 현재 활성화된 탭 타입
+            let currentFilter = 'radio'; 
 
             stations.forEach(station => {
                 if (station.name.trim() === '') return;
@@ -313,34 +325,28 @@
                 card.textContent = station.name;
                 card.dataset.url = station.url;
                 card.dataset.name = station.name;
-                card.dataset.type = station.type; // ⬇️ 카드에 타입 데이터 추가
+                card.dataset.type = station.type; 
                 stationList.appendChild(card);
             });
             
-            // ⬇️ (새로 추가) 탭 클릭 이벤트 처리
             tabContainer.addEventListener('click', function(e) {
                 const button = e.target.closest('.tab-button');
                 if (button && !button.classList.contains('active')) {
-                    // 모든 버튼에서 active 클래스 제거
                     tabButtons.forEach(btn => btn.classList.remove('active'));
-                    // 클릭된 버튼에 active 클래스 추가
                     button.classList.add('active');
                     currentFilter = button.dataset.type;
                     filterStations(currentFilter);
-                    
-                    // 탭 변경 시 해당 탭의 첫 방송 자동 재생 (음소거 상태 유지)
                     playFirstVisibleStation();
                 }
             });
             
-            // ⬇️ (새로 추가) 방송국 필터링 함수
             function filterStations(type) {
                 const allCards = stationList.querySelectorAll('.station-card');
                 allCards.forEach(card => {
                     if (card.dataset.type === type) {
-                        card.classList.add('visible'); // visible 클래스 추가하여 보이게 함
+                        card.classList.add('visible'); 
                     } else {
-                        card.classList.remove('visible'); // 다른 타입은 숨김
+                        card.classList.remove('visible'); 
                     }
                 });
             }
@@ -354,11 +360,10 @@
                     playStream(url);
                     nowPlaying.textContent = `▶ ${name}`;
                     
-                    // 현재 보이는 카드 중에서 active 클래스 관리
                     const visibleCards = stationList.querySelectorAll('.station-card.visible');
                     visibleCards.forEach(c => c.classList.remove('active'));
                     card.classList.add('active');
-                    currentCard = card; // 현재 선택된 카드 업데이트
+                    currentCard = card; 
                 }
             });
 
@@ -384,21 +389,22 @@
             });
 
             function changeChannel(direction) {
-                // ⬇️ (수정) 현재 보이는 카드 목록만 가져옴
                 const visibleCards = Array.from(stationList.querySelectorAll('.station-card.visible'));
                 if (visibleCards.length === 0) return; 
                 
                 const lastIndex = visibleCards.length - 1;
                 let currentIndex = -1;
-                if (currentCard) {
+                if (currentCard && visibleCards.includes(currentCard)) { // 현재 카드가 보이는 목록에 있는지 확인
                     currentIndex = visibleCards.indexOf(currentCard);
                 }
                 
                 let nextIndex;
                 if (direction === 'down') {
+                    // 현재 선택이 없거나 마지막이면 0번으로, 아니면 다음으로
                     nextIndex = (currentIndex === -1 || currentIndex === lastIndex) ? 0 : currentIndex + 1;
                 } else { // 'up'
-                    nextIndex = (currentIndex <= 0) ? lastIndex : currentIndex - 1;
+                    // 현재 선택이 없거나 첫번째면 마지막으로, 아니면 이전으로
+                    nextIndex = (currentIndex === -1 || currentIndex === 0) ? lastIndex : currentIndex - 1;
                 }
                 
                 const nextCard = visibleCards[nextIndex];
@@ -407,6 +413,7 @@
                     nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
                 }
             }
+
 
             document.addEventListener('keydown', function(e) {
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -444,7 +451,6 @@
             document.addEventListener('wheel', unmuteAfterInteraction, unmuteOptions);
             document.addEventListener('touchstart', unmuteAfterInteraction, unmuteOptions);
 
-            // ⬇️ (새로 추가) 현재 보이는 첫 방송 재생 함수
             function playFirstVisibleStation() {
                 const firstVisibleStation = stationList.querySelector('.station-card.visible');
                 if (firstVisibleStation) {
