@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>YM RADIO</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --primary-text: #ffffff;
+            --accent-color: #1db954;
+            --hover-color: #282828;
+            --tab-inactive: #555;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--card-color); }
+        ::-webkit-scrollbar-thumb { background: var(--hover-color); border-radius: 5px; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            display: flex;
+            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin: 0.5rem 0 1rem 0;
+            padding: 0 1rem;
+            flex-shrink: 0;
+        }
+        
+        #main-layout {
+            display: flex;
+            flex-direction: column; /* 기본은 수직 */
+            flex-grow: 1;
+            min-height: 0;
+            gap: 1rem;
+            padding: 0 1rem 1rem 1rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #player-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow: auto; /* 모바일(세로) 기본 */
+            resize: vertical; /* 모바일(세로) 기본 */
+            min-height: 300px; 
+        }
+        
+        #player-container {
+            width: 100%;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 1rem;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        #now-playing {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 0.8rem;
+            text-align: center;
+            height: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #video-wrapper {
+            position: relative; 
+            background-color: #000; 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+
+        video {
+            width: 100%;
+            height: 100%; 
+            display: block; 
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        #radio-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; 
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #aaa; font-size: 1.1rem; font-weight: 500;
+        }
+        
+        #initial-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; /* .initial-state 클래스로 제어 */
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #aaa; font-size: 1.1rem; font-weight: 500;
+            background-color: #000; /* 비디오 영역과 동일한 배경 */
+            z-index: 10;
+        }
+        
+        .initial-state #initial-overlay {
+            display: flex;
+        }
+
+        .audio-only #radio-overlay { display: flex; }
+
+        #keyboard-guide {
+            font-size: 0.85rem; color: #999;
+            text-align: center;
+        }
+        
+        #tab-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem; 
+            flex-shrink: 0;
+            flex-wrap: wrap; /* 탭이 많아지면 줄바꿈 */
+        }
+        
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: var(--tab-inactive);
+            color: var(--primary-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        
+        .tab-button.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: bold;
+        }
+
+        #station-list-container {
+             display: flex;
+             flex-direction: column; 
+             flex-grow: 1;
+             min-height: 0; 
+        }
+        
+        #station-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.8rem;
+            overflow-y: auto;
+            min-height: 0; 
+            align-items: start; 
+            align-content: start; 
+            flex-grow: 1; 
+        }
+
+        .station-card {
+            background-color: var(--card-color);
+            padding: 1em 0.5rem; 
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: none; 
+        }
+        
+        .station-card.visible {
+            display: block;
+        }
+
+        .station-card:active { transform: scale(0.96); }
+        .station-card.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(29, 185, 84, 0.4);
+        }
+
+        @media (min-width: 768px) {
+            #main-layout {
+                flex-direction: row; 
+            }
+            #player-column {
+                flex: 1; 
+                min-width: 320px; 
+                resize: horizontal;
+                overflow: visible; 
+            }
+            #station-list-container {
+                flex: 0 0 480px; 
+            }
+        }
+    </style>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
+</head>
+<body>
+
+    <h1>📻 YM RADIO</h1>
+
+    <main id="main-layout">
+        <div id="player-column">
+            <div id="player-container">
+                <div id="now-playing">방송국을 선택하세요...</div>
+                
+                <div id="video-wrapper" class="initial-state">
+                    <video id="radio-player" controls autoplay playsinline muted></video>
+                    
+                    <div id="radio-overlay">
+                        <span style="font-size: 64px;">📻</span>
+                        <p style="margin-top: 1rem;">라디오 방송 중</p>
+                    </div>
+                    
+                    <div id="initial-overlay">
+                        <span style="font-size: 64px;">📡</span>
+                        <p style="margin-top: 1rem;">"방송채널"을 선택해주세요.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="keyboard-guide">
+                채널: ↑/↓  |  볼륨: ←/→  |  음소거: M
+            </div>
+        </div>
+        
+        <div id="station-list-container">
+            <div id="tab-container">
+                <button class="tab-button active" data-type="radio">📻 RADIO</button>
+                <button class="tab-button" data-type="iptv">📺 ipTV</button>
+                <button class="tab-button" data-type="pending">📡 방송 준비중</button>
+            </div>
+            
+            <div id="station-list"></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stations = [
+                // (방송국 목록은 이전과 동일)
+                // 라디오 채널
+                { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'CBS JOY4U', url: 'https://m-aac.cbs.co.kr/mweb_cbscmc/_definst_/cbscmc.stream/chunklist.m3u8', type: 'radio' },
+                { name: 'YTN 라디오', url: 'https://radiolive.ytn.co.kr/radio/_definst_/20211118_fmlive/playlist.m3u8', type: 'radio' },
+                { name: 'OBS 라디오', url: 'https://vod3.obs.co.kr:444/live/obsstream1/radio.stream/playlist.m3u8', type: 'radio' },
+                { name: 'EBS FM', url: 'https://ebsonair.ebs.co.kr/fmradiofamilypc/familypc1m/playlist.m3u8', type: 'radio' },
+                { name: 'TBS FM', url: 'https://cdnfm.tbs.seoul.kr/tbs/_definst_/tbs_fm_web_360.smil/playlist.m3u8', type: 'radio' },
+                { name: 'TBS eFM', url: 'https://cdnefm.tbs.seoul.kr/tbs/_definst_/tbs_efm_web_360.smil/playlist.m3u8', type: 'radio' },
+                { name: 'TBN 경인교통방송', url: 'https://5cc6beb04faf6.streamlock.net/gyeongin/myStream/playlist.m3u8', type: 'radio' },
+                { name: 'iFM 경인방송', url: 'https://stream.ifm.kr/live/aod1/playlist.m3u8', type: 'radio' },
+                
+                // IPTV 채널
+                { name: 'EBS1TV', url: 'https://ebsonair.ebs.co.kr/ebs1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBS2TV', url: 'https://ebsonair.ebs.co.kr/ebs2familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSEnglish', url: 'https://ebsonair.ebs.co.kr/plus3familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSKids', url: 'https://ebsonair.ebs.co.kr/ebsufamilypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSPlus1', url: 'https://ebsonair.ebs.co.kr/plus1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'EBSPlus2', url: 'https://ebsonair.ebs.co.kr/plus2familypc/familypc1m/playlist.m3u8', type: 'iptv' },
+                { name: 'OUN', url: 'https://live.knou.ac.kr/knou1/live1/playlist.m3u8', type: 'iptv' },
+                { name: 'TBSTV', url: 'https://cdntv.tbs.seoul.kr/tbs/tbs_tv_web.smil/playlist.m3u8', type: 'iptv' },
+                { name: 'WBC복지TV', url: 'https://cdnlive179.smartucc.kr/smartlive/312/46324be24454bd98f785039457ac695d/playlist.m3u8', type: 'iptv' },
+                { name: '국악TV', url: 'https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_UBC', url: 'https://stream.ubc.co.kr/hls/ubctvstream/index.m3u8', type: 'iptv' },
+                { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
+                { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8', type: 'iptv' },
+                { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' }, 
+                { name: 'CJOnStyle', url: 'https://live-ch1.cjonstyle.net/cjmalllive/stream2/playlist.m3u8', type: 'iptv' },
+                { name: 'CJOnStyle+', url: 'https://live-ch2.cjonstyle.net/cjosplus/live2/playlist.m3u8', type: 'iptv' },
+                { name: 'GS My Shop', url: 'https://gstv-myshop.gsshop.com/myshop_hd/myshop_hd.stream/playlist.m3u8', type: 'iptv' },
+                { name: 'GS Shop', url: 'https://gstv-gsshop.gsshop.com/gsshop_hd/gsshop_hd.stream/playlist.m3u8', type: 'iptv' },
+                { name: '공영쇼핑', url: 'https://etv.publichs.com/live5.stream/playlist.m3u8', type: 'iptv' },
+                { name: '현대쇼핑 Hmall', url: 'https://livejj.hyundaihmall.com:8443/live/ngrp:hmall.stream_pc/playlist.m3u8', type: 'iptv' },
+                { name: '현대쇼핑 Plus#', url: 'https://dtvstreaming.hyundaihmall.com/newcjp3/_definst_/newcjpstream.smil/playlist.m3u8', type: 'iptv' },
+                { name: '롯데홈쇼핑', url: 'https://pchlslivesw.lotteimall.com/live/livestream/lotteimalllive_mp4.m3u8', type: 'iptv' },
+                { name: '롯데OneTV', url: 'https://onetvhlslive.lotteimall.com/lotteonetvlive/lotteonetvlive.mp4.m3u8', type: 'iptv' },
+                { name: 'NS홈쇼핑', url: 'https://livestream.nsmall.com/IPHONE/nsmallMobile.m3u8', type: 'iptv' },
+                { name: 'NSShop+', url: 'https://shoppstream.nsmall.com/IPHONE/mobile.m3u8', type: 'iptv' },
+                { name: '신세계 TV쇼핑', url: 'https://liveout.catenoid.net/live-02-shinsegaetvshopping/shinsegaetvshopping_720p/playlist.m3u8', type: 'iptv' },
+                { name: '더블유쇼핑', url: 'https://liveout.catenoid.net/live-05-wshopping/wshopping_1500k/playlist.m3u8', type: 'iptv' },
+                { name: '홈&쇼핑', url: 'https://s28.qtcdn.co.kr/media/liveM3U8/idx/518045142/enc/1860408350/playlist.m3u8', type: 'iptv' },
+                { name: '쇼핑NT', url: 'https://live.shoppingntmall.com/live/10011.m3u8', type: 'iptv' },
+                { name: '종교 FGTV', url: 'https://fgtvlive.fgtv.com/smil:fgtv.smil/playlist.m3u8', type: 'iptv' },
+                { name: '종교 CGN', url: 'https://du35ivadp6cxj.cloudfront.net/out/v1/81781d23cbbf490990b2aa9181d4ce19/CGNWebLiveKR.m3u8', type: 'iptv' },
+                { name: 'MNBWorld', url: 'https://cdn4.skygo.mn/live/disk1/MNB_World/HLSv3-FTA/MNB_World.m3u8', type: 'iptv' },
+                { name: 'AJE', url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8', type: 'iptv' },
+                { name: 'ABN(외국)', url: 'https://mediaserver.abnvideos.com/streams/abnafghanistan.m3u8', type: 'iptv' },
+                { name: 'P Korea', url: 'https://korhls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
+                { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
+                { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'iptv' },
+                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly454y7dm2xfa123r2_tv/index.m3u8', type: 'iptv' },
+                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' },
+
+                { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'pending' },
+                { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'pending' },
+                { name: 'MBC_CXD', url: 'https://5ee9633b25727.streamlock.net/jmbc_tv/_definst_/jmbc_tv.stream/playlist.m3u8', type: 'pending' },
+                { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8', type: 'pending' },
+                /* --- (수정) 쉼표(,)가 두 개였던 부분 수정 --- */
+                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly454y7dm2xfa123r2_tv/index.m3u8', type: 'pending' },
+                /* -------------------------------------- */
+                { name: 'KBS 1라디오', url: 'https://1radio.gscdn.kbs.co.kr/1radio_192_4.m3u8', type: 'pending' },
+                { name: 'KBS 2라디오', url: 'https://2radio-ad.gscdn.kbs.co.kr/2radio_ad_192_1.m3u8', type: 'pending' },
+                { name: 'KBS 3라디오', url: 'https://3radio.gscdn.kbs.co.kr/3radio_192_3.m3u8', type: 'pending' },
+                { name: 'KBS 1FM', url: 'https://1fm.gscdn.kbs.co.kr/1fm_192_2.m3u8', type: 'pending' },
+                { name: 'KBS 2FM', url: 'https://2fm-ad.gscdn.kbs.co.kr/2fm_ad_192_1.m3u8', type: 'pending' }
+];
+
+            const video = document.getElementById('radio-player');
+            const stationList = document.getElementById('station-list');
+            const nowPlaying = document.getElementById('now-playing');
+            const videoWrapper = document.getElementById('video-wrapper');
+            const mainLayout = document.getElementById('main-layout'); 
+            const tabContainer = document.getElementById('tab-container'); 
+            const tabButtons = tabContainer.querySelectorAll('.tab-button'); 
+            
+            let hls = new Hls();
+            let currentCard = null;
+            let currentFilter = 'radio'; 
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            stations.forEach(station => {
+                if (station.name.trim() === '') return;
+                const card = document.createElement('div');
+                card.className = 'station-card';
+                card.textContent = station.name;
+                card.dataset.url = station.url;
+                card.dataset.name = station.name;
+                card.dataset.type = station.type; 
+                stationList.appendChild(card);
+            });
+            
+            tabContainer.addEventListener('click', function(e) {
+                const button = e.target.closest('.tab-button');
+                if (button && !button.classList.contains('active')) {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentFilter = button.dataset.type;
+                    filterStations(currentFilter);
+                    playFirstVisibleStation();
+                }
+            });
+            
+            function filterStations(type) {
+                const allCards = stationList.querySelectorAll('.station-card');
+                allCards.forEach(card => {
+                    if (card.dataset.type === type) {
+                        card.classList.add('visible'); 
+                    } else {
+                        card.classList.remove('visible'); 
+                    }
+                });
+            }
+
+            stationList.addEventListener('click', function (e) {
+                const card = e.target.closest('.station-card');
+                if (card) {
+                    videoWrapper.classList.remove('initial-state'); 
+                    const url = card.dataset.url;
+                    const name = card.dataset.name;
+                    videoWrapper.classList.remove('audio-only');
+                    playStream(url);
+                    nowPlaying.textContent = `▶ ${name}`;
+                    
+                    const visibleCards = stationList.querySelectorAll('.station-card.visible');
+                    visibleCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    currentCard = card; 
+                }
+            });
+
+            function playStream(url) {
+                if (Hls.isSupported()) {
+                    hls.destroy();
+                    hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = url;
+                    video.play();
+                }
+            }
+            
+            video.addEventListener('playing', function() {
+                if (video.videoWidth === 0) {
+                    videoWrapper.classList.add('audio-only');
+                } else {
+                    videoWrapper.classList.remove('audio-only');
+                }
+            });
+
+            function changeChannel(direction) {
+                const visibleCards = Array.from(stationList.querySelectorAll('.station-card.visible'));
+                if (visibleCards.length === 0) return; 
+                
+                const lastIndex = visibleCards.length - 1;
+                let currentIndex = -1;
+                if (currentCard && visibleCards.includes(currentCard)) { 
+                    currentIndex = visibleCards.indexOf(currentCard);
+                }
+                
+                let nextIndex;
+                if (direction === 'down') {
+                    nextIndex = (currentIndex === -1 || currentIndex === lastIndex) ? 0 : currentIndex + 1;
+                } else { // 'up'
+                    nextIndex = (currentIndex === -1 || currentIndex === 0) ? lastIndex : currentIndex - 1;
+                }
+                
+                const nextCard = visibleCards[nextIndex];
+                if (nextCard) {
+                    nextCard.click(); 
+                    nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                }
+            }
+
+            function handleTouchStart(e) {
+                if (stationList.contains(e.target)) {
+                    touchStartX = 0; touchStartY = 0;
+                    return;
+                }
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+
+            function handleTouchMove(e) {
+                if (touchStartX === 0 && touchStartY === 0) return;
+                e.preventDefault();
+            }
+
+            function handleTouchEnd(e) {
+                if (touchStartX === 0 && touchStartY === 0) return;
+
+                let touchEndX = e.changedTouches[0].clientX;
+                let touchEndY = e.changedTouches[0].clientY;
+                
+                let deltaX = touchEndX - touchStartX;
+                /* --- (버그 수정) startY -> touchStartY --- */
+                let deltaY = touchEndY - touchStartY; 
+                /* -------------------------------------- */
+                let absDeltaX = Math.abs(deltaX);
+                let absDeltaY = Math.abs(deltaY);
+                
+                const minSwipeDistance = 50; 
+
+                if (absDeltaX > absDeltaY) {
+                    if (absDeltaX > minSwipeDistance) {
+                        if (deltaX > 0) { 
+                            video.volume = Math.min(1, video.volume + 0.1);
+                        } else { 
+                            video.volume = Math.max(0, video.volume - 0.1);
+                        }
+                    }
+                } else {
+                    if (absDeltaY > minSwipeDistance) {
+                        if (deltaY > 0) { 
+                            changeChannel('down');
+                        } else { 
+                            changeChannel('up');
+                        }
+                    }
+                }
+                
+                touchStartX = 0;
+                touchStartY = 0;
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+                switch (e.key) {
+                    case 'ArrowUp': changeChannel('up'); break;
+                    case 'ArrowDown': changeChannel('down'); break;
+                    case 'ArrowLeft': video.volume = Math.max(0, video.volume - 0.1); break;
+                    case 'ArrowRight': video.volume = Math.min(1, video.volume + 0.1); break;
+                    case 'm': case 'M': video.muted = !video.muted; break;
+                }
+            });
+
+            mainLayout.addEventListener('wheel', function(e) {
+                if (stationList.contains(e.target)) {
+                    return;
+                }
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    changeChannel('up');
+                } else {
+                    changeChannel('down');
+                }
+            }, { passive: false }); 
+
+            mainLayout.addEventListener('touchstart', handleTouchStart, { passive: false });
+            mainLayout.addEventListener('touchmove', handleTouchMove, { passive: false });
+            mainLayout.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+            function unmuteAfterInteraction() {
+                if (video.muted) {
+                    video.muted = false;
+                }
+            }
+            const unmuteOptions = { once: true };
+            document.addEventListener('click', unmuteAfterInteraction, unmuteOptions);
+            document.addEventListener('keydown', unmuteAfterInteraction, unmuteOptions);
+            document.addEventListener('wheel', unmuteAfterInteraction, unmuteOptions);
+            document.addEventListener('touchstart', unmuteAfterInteraction, unmuteOptions);
+
+            function playFirstVisibleStation() {
+                const firstVisibleStation = stationList.querySelector('.station-card.visible');
+                if (firstVisibleStation) {
+                    firstVisibleStation.click();
+                } else {
+                    videoWrapper.classList.add('initial-state');
+                    nowPlaying.textContent = '방송국을 선택하세요...';
+                }
+            }
+
+            /* --- (수정) 초기화 시 자동 재생 제거 --- */
+            // 페이지 로드 시 첫 탭의 방송 목록만 표시
+            filterStations(currentFilter);
+            // playFirstVisibleStation(); // 자동 재생 제거
+            /* ---------------------------------- */
+
+        });
+    </script>
+</body>
+</html>
