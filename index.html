@@ -50,12 +50,7 @@
             gap: 1rem;
             padding: 0 1rem 1rem 1rem;
             box-sizing: border-box;
-
             width: 100%;
-            /* --- (수정 1) 앱 전체의 max-width 및 margin 제거 --- */
-            /* max-width: 1920px; (제거) */
-            /* margin: 0 auto; (제거) */
-            /* --------------------------------------------- */
         }
 
         #player-column {
@@ -111,6 +106,21 @@
             align-items: center; justify-content: center;
             color: #aaa; font-size: 1.1rem; font-weight: 500;
         }
+        
+        #initial-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; /* .initial-state 클래스로 제어 */
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #aaa; font-size: 1.1rem; font-weight: 500;
+            background-color: #000; /* 비디오 영역과 동일한 배경 */
+            z-index: 10;
+        }
+        
+        .initial-state #initial-overlay {
+            display: flex;
+        }
 
         .audio-only #radio-overlay { display: flex; }
 
@@ -123,7 +133,8 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 0.8rem; 
-            flex-shrink: 0; 
+            flex-shrink: 0;
+            flex-wrap: wrap; /* 탭이 많아지면 줄바꿈 */
         }
         
         .tab-button {
@@ -191,17 +202,13 @@
                 flex-direction: row; 
             }
             #player-column {
-                /* --- (수정 2) 75% 고정 -> 남은 공간 전체 사용 --- */
                 flex: 1; 
-                /* ----------------------------------------- */
                 min-width: 320px; 
                 resize: horizontal;
                 overflow: visible; 
             }
             #station-list-container {
-                /* --- (수정 3) 남은 공간 -> 480px 고정 너비 --- */
                 flex: 0 0 480px; 
-                /* --------------------------------------- */
             }
         }
     </style>
@@ -216,12 +223,18 @@
         <div id="player-column">
             <div id="player-container">
                 <div id="now-playing">방송국을 선택하세요...</div>
-                <div id="video-wrapper">
+                
+                <div id="video-wrapper" class="initial-state">
                     <video id="radio-player" controls autoplay playsinline muted></video>
                     
                     <div id="radio-overlay">
                         <span style="font-size: 64px;">📻</span>
                         <p style="margin-top: 1rem;">라디오 방송 중</p>
+                    </div>
+                    
+                    <div id="initial-overlay">
+                        <span style="font-size: 64px;">📡</span>
+                        <p style="margin-top: 1rem;">"방송채널"을 선택해주세요.</p>
                     </div>
                 </div>
             </div>
@@ -234,6 +247,7 @@
             <div id="tab-container">
                 <button class="tab-button active" data-type="radio">📻 RADIO</button>
                 <button class="tab-button" data-type="iptv">📺 ipTV</button>
+                <button class="tab-button" data-type="pending">📡 방송 준비중</button>
             </div>
             
             <div id="station-list"></div>
@@ -244,7 +258,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const stations = [
                 // (방송국 목록은 이전과 동일)
-                 // 라디오 채널
+                // 라디오 채널
                 { name: 'CBS 표준FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs981/_definst_/cbs981.stream/chunklist.m3u8', type: 'radio' },
                 { name: 'CBS 음악FM', url: 'https://m-aac.cbs.co.kr/mweb_cbs939/_definst_/cbs939.stream/chunklist.m3u8', type: 'radio' },
                 { name: 'CBS JOY4U', url: 'https://m-aac.cbs.co.kr/mweb_cbscmc/_definst_/cbscmc.stream/chunklist.m3u8', type: 'radio' },
@@ -267,9 +281,7 @@
                 { name: 'TBSTV', url: 'https://cdntv.tbs.seoul.kr/tbs/tbs_tv_web.smil/playlist.m3u8', type: 'iptv' },
                 { name: 'WBC복지TV', url: 'https://cdnlive179.smartucc.kr/smartlive/312/46324be24454bd98f785039457ac695d/playlist.m3u8', type: 'iptv' },
                 { name: '국악TV', url: 'https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8', type: 'iptv' },
-                { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8', type: 'iptv' },
                 { name: 'SBS_UBC', url: 'https://stream.ubc.co.kr/hls/ubctvstream/index.m3u8', type: 'iptv' },
-                { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'iptv' },
                 { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
                 { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8', type: 'iptv' },
                 { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8', type: 'iptv' },
@@ -298,8 +310,21 @@
                 { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
                 { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'iptv' },
                 { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly454y7dm2xfa123r2_tv/index.m3u8', type: 'iptv' },
-                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' }, 
-            ];
+                { name: 'ABN(한국)', url: 'https://vod2.abn.co.kr/IPHONE/abn.m3u8', type: 'iptv' },
+
+                { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'pending' },
+                { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'pending' },
+                { name: 'MBC_CXD', url: 'https://5ee9633b25727.streamlock.net/jmbc_tv/_definst_/jmbc_tv.stream/playlist.m3u8', type: 'pending' },
+                { name: 'SBS_KBC', url: 'https://vod.ikbc.co.kr/KBCTV/tv/playlist.m3u8', type: 'pending' },
+                /* --- (수정) 쉼표(,)가 두 개였던 부분 수정 --- */
+                { name: 'SBS_KNN', url: 'https://stream1.knn.co.kr/hls/9ly454y7dm2xfa123r2_tv/index.m3u8', type: 'pending' },
+                /* -------------------------------------- */
+                { name: 'KBS 1라디오', url: 'https://1radio.gscdn.kbs.co.kr/1radio_192_4.m3u8', type: 'pending' },
+                { name: 'KBS 2라디오', url: 'https://2radio-ad.gscdn.kbs.co.kr/2radio_ad_192_1.m3u8', type: 'pending' },
+                { name: 'KBS 3라디오', url: 'https://3radio.gscdn.kbs.co.kr/3radio_192_3.m3u8', type: 'pending' },
+                { name: 'KBS 1FM', url: 'https://1fm.gscdn.kbs.co.kr/1fm_192_2.m3u8', type: 'pending' },
+                { name: 'KBS 2FM', url: 'https://2fm-ad.gscdn.kbs.co.kr/2fm_ad_192_1.m3u8', type: 'pending' }
+];
 
             const video = document.getElementById('radio-player');
             const stationList = document.getElementById('station-list');
@@ -352,6 +377,7 @@
             stationList.addEventListener('click', function (e) {
                 const card = e.target.closest('.station-card');
                 if (card) {
+                    videoWrapper.classList.remove('initial-state'); 
                     const url = card.dataset.url;
                     const name = card.dataset.name;
                     videoWrapper.classList.remove('audio-only');
@@ -431,7 +457,9 @@
                 let touchEndY = e.changedTouches[0].clientY;
                 
                 let deltaX = touchEndX - touchStartX;
-                let deltaY = touchEndY - startY;
+                /* --- (버그 수정) startY -> touchStartY --- */
+                let deltaY = touchEndY - touchStartY; 
+                /* -------------------------------------- */
                 let absDeltaX = Math.abs(deltaX);
                 let absDeltaY = Math.abs(deltaY);
                 
@@ -503,11 +531,17 @@
                 const firstVisibleStation = stationList.querySelector('.station-card.visible');
                 if (firstVisibleStation) {
                     firstVisibleStation.click();
+                } else {
+                    videoWrapper.classList.add('initial-state');
+                    nowPlaying.textContent = '방송국을 선택하세요...';
                 }
             }
 
+            /* --- (수정) 초기화 시 자동 재생 제거 --- */
+            // 페이지 로드 시 첫 탭의 방송 목록만 표시
             filterStations(currentFilter);
-            playFirstVisibleStation();
+            // playFirstVisibleStation(); // 자동 재생 제거
+            /* ---------------------------------- */
 
         });
     </script>
