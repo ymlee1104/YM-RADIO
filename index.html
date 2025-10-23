@@ -10,7 +10,7 @@
             --bg-color: #121212;
             --card-color: #1e1e1e;
             --primary-text: #ffffff;
-            --accent-color: #1db954;
+            --accent-color: #1db954; /* 'now-playing' 텍스트 등에 사용됨 */
             --hover-color: #282828;
             --tab-inactive: #555;
         }
@@ -74,7 +74,7 @@
         #now-playing {
             font-size: 1rem;
             font-weight: bold;
-            color: var(--accent-color);
+            color: var(--accent-color); /* 녹색 유지 */
             margin-bottom: 0.8rem;
             text-align: center;
             height: 20px;
@@ -144,15 +144,16 @@
             color: var(--primary-text);
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 1rem; /* 과제 1: 0.9rem -> 1rem */
+            font-weight: 600; /* 과제 1: 500 -> 600 */
             transition: background-color 0.2s ease;
         }
         
         .tab-button.active {
-            background-color: var(--accent-color);
-            color: var(--bg-color);
-            font-weight: bold;
+            /* 과제 2: 녹색 대신 더 밝은 회색으로 변경 */
+            background-color: #777; 
+            color: var(--primary-text); /* 어두운색 -> 흰색 */
+            font-weight: bold; /* 600보다 더 굵게 (700) */
         }
 
         #station-list-container {
@@ -191,10 +192,12 @@
 
         .station-card:active { transform: scale(0.96); }
         .station-card.active {
-            background-color: var(--accent-color);
-            color: var(--bg-color);
+            /* 과제 2: 녹색 대신 더 밝은 회색으로 변경 */
+            background-color: #444;
+            color: var(--primary-text); /* 어두운색 -> 흰색 */
             font-weight: bold;
-            box-shadow: 0 0 10px rgba(29, 185, 84, 0.4);
+            /* 과제 2: 녹색 그림자 -> 은은한 회색 그림자 */
+            box-shadow: 0 0 8px rgba(200, 200, 200, 0.2);
         }
 
         @media (min-width: 768px) {
@@ -546,6 +549,3 @@
     </script>
 </body>
 </html>
-
-
-
