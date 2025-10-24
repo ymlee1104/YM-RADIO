@@ -14,17 +14,21 @@
             --hover-color: #282828;
             --tab-inactive: #555;
         }
-
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--card-color); }
-        ::-webkit-scrollbar-thumb { background: var(--hover-color); border-radius: 5px; }
-
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--card-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--hover-color);
+            border-radius: 5px;
+        }
         html, body {
             height: 100%;
             margin: 0;
             overflow: hidden;
         }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -33,7 +37,6 @@
             flex-direction: column;
             -webkit-tap-highlight-color: transparent;
         }
-
         h1 {
             font-size: 1.8rem;
             text-align: center;
@@ -41,7 +44,6 @@
             padding: 0 1rem;
             flex-shrink: 0;
         }
-        
         #main-layout {
             display: flex;
             flex-direction: column; /* 기본은 수직 */
@@ -52,14 +54,15 @@
             box-sizing: border-box;
             width: 100%;
         }
-
+        
         #player-column {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
             overflow: auto; /* 모바일(세로) 기본 */
             resize: vertical; /* 모바일(세로) 기본 */
-            min-height: 300px; 
+            flex-grow: 1; /* 모바일에서 플레이어가 남은 공간 차지 */
+            min-height: 0; /* flex-grow를 위한 설정 */
         }
         
         #player-container {
@@ -70,7 +73,6 @@
             box-sizing: border-box;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
-        
         #now-playing {
             font-size: 1rem;
             font-weight: bold;
@@ -82,85 +84,89 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         #video-wrapper {
-            position: relative; 
-            background-color: #000; 
-            border-radius: 8px; 
-            overflow: hidden; 
+            position: relative;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
         }
-
         video {
             width: 100%;
-            height: 100%; 
-            display: block; 
+            height: 100%;
+            display: block;
             aspect-ratio: 16 / 9;
             object-fit: cover;
         }
-
         #radio-overlay {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: none; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
             flex-direction: column;
-            align-items: center; justify-content: center;
-            color: #aaa; font-size: 1.1rem; font-weight: 500;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 1.1rem;
+            font-weight: 500;
         }
-        
         #initial-overlay {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: none; /* .initial-state 클래스로 제어 */
             flex-direction: column;
-            align-items: center; justify-content: center;
-            color: #aaa; font-size: 1.1rem; font-weight: 500;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 1.1rem;
+            font-weight: 500;
             background-color: #000; /* 비디오 영역과 동일한 배경 */
             z-index: 10;
         }
-        
         .initial-state #initial-overlay {
             display: flex;
         }
-
-        .audio-only #radio-overlay { display: flex; }
-
+        .audio-only #radio-overlay {
+            display: flex;
+        }
         #keyboard-guide {
-            font-size: 0.85rem; color: #999;
+            font-size: 0.85rem;
+            color: #999;
             text-align: center;
         }
-        
         #tab-container {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.8rem; 
+            margin-bottom: 0.8rem;
             flex-shrink: 0;
             flex-wrap: wrap; /* 탭이 많아지면 줄바꿈 */
         }
-        
         .tab-button {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1rem; /* 상하 0.5rem */
             border: none;
             background-color: var(--tab-inactive);
             color: var(--primary-text);
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1rem; /* 과제 1: 0.9rem -> 1rem */
-            font-weight: 600; /* 과제 1: 500 -> 600 */
+            font-size: 1rem;
+            font-weight: 600;
             transition: background-color 0.2s ease;
         }
-        
         .tab-button.active {
-            /* 과제 2: 녹색 대신 더 밝은 회색으로 변경 */
-            background-color: #777; 
-            color: var(--primary-text); /* 어두운색 -> 흰색 */
-            font-weight: bold; /* 600보다 더 굵게 (700) */
+            background-color: #777;
+            color: var(--primary-text);
+            font-weight: bold;
         }
-
+        
         #station-list-container {
-             display: flex;
-             flex-direction: column; 
-             flex-grow: 1;
-             min-height: 0; 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0; /* 축소 방지 */
+            height: 350px; /* 목록 높이를 350px로 고정 */
         }
         
         #station-list {
@@ -168,73 +174,68 @@
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 0.8rem;
             overflow-y: auto;
-            min-height: 0; 
-            align-items: start; 
-            align-content: start; 
-            flex-grow: 1; 
+            min-height: 0;
+            align-items: start;
+            align-content: start;
+            flex-grow: 1;
         }
 
+        /* --- 여기가 수정된 부분 --- */
         .station-card {
             background-color: var(--card-color);
-            padding: 1em 0.5rem; 
+            padding: 0.4rem 0.5rem; /* 기존 방송목록 버튼(.station-card)의 상하 여백을 1em(약 0.9rem) -> 0.4rem으로 변경 */
             border-radius: 8px;
             text-align: center;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.2s ease;
             font-weight: 500;
             font-size: 0.9rem;
-            display: none; 
+            display: none;
         }
-        
+        /* -------------------------- */
+
         .station-card.visible {
             display: block;
         }
-
-        .station-card:active { transform: scale(0.96); }
+        .station-card:active {
+            transform: scale(0.96);
+        }
         .station-card.active {
-            /* 과제 2: 녹색 대신 더 밝은 회색으로 변경 */
             background-color: #444;
-            color: var(--primary-text); /* 어두운색 -> 흰색 */
+            color: var(--primary-text);
             font-weight: bold;
-            /* 과제 2: 녹색 그림자 -> 은은한 회색 그림자 */
             box-shadow: 0 0 8px rgba(200, 200, 200, 0.2);
         }
-
         @media (min-width: 768px) {
             #main-layout {
-                flex-direction: row; 
+                flex-direction: row;
             }
             #player-column {
-                flex: 1; 
-                min-width: 320px; 
+                flex: 1;
+                min-width: 320px;
                 resize: horizontal;
-                overflow: visible; 
+                overflow: visible;
             }
             #station-list-container {
-                flex: 0 0 480px; 
+                flex: 0 0 480px;
+                height: auto; /* 데스크톱에서는 고정 높이 해제 */
             }
         }
     </style>
-
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
 </head>
 <body>
-
     <h1>📻 YM RADIO</h1>
-
     <main id="main-layout">
         <div id="player-column">
             <div id="player-container">
                 <div id="now-playing">방송국을 선택하세요...</div>
-                
                 <div id="video-wrapper" class="initial-state">
                     <video id="radio-player" controls autoplay playsinline muted></video>
-                    
                     <div id="radio-overlay">
                         <span style="font-size: 64px;">📻</span>
                         <p style="margin-top: 1rem;">라디오 방송 중</p>
                     </div>
-                    
                     <div id="initial-overlay">
                         <span style="font-size: 64px;">📡</span>
                         <p style="margin-top: 1rem;">"방송채널"을 선택해주세요.</p>
@@ -242,17 +243,16 @@
                 </div>
             </div>
             <div id="keyboard-guide">
-                채널: ↑/↓  |  볼륨: ←/→  |  음소거: M
+                채널: ↑/↓ | 볼륨: ←/→ | 음소거: M
             </div>
         </div>
-        
+
         <div id="station-list-container">
             <div id="tab-container">
                 <button class="tab-button active" data-type="radio">📻 RADIO</button>
                 <button class="tab-button" data-type="iptv">📺 ipTV</button>
                 <button class="tab-button" data-type="pending">📡 방송 준비중</button>
             </div>
-            
             <div id="station-list"></div>
         </div>
     </main>
@@ -272,7 +272,7 @@
                 { name: 'TBS eFM', url: 'https://cdnefm.tbs.seoul.kr/tbs/_definst_/tbs_efm_web_360.smil/playlist.m3u8', type: 'radio' },
                 { name: 'TBN 경인교통방송', url: 'https://5cc6beb04faf6.streamlock.net/gyeongin/myStream/playlist.m3u8', type: 'radio' },
                 { name: 'iFM 경인방송', url: 'https://stream.ifm.kr/live/aod1/playlist.m3u8', type: 'radio' },
-                
+
                 // IPTV 채널
                 { name: 'OUN', url: 'https://live.knou.ac.kr/knou1/live1/playlist.m3u8', type: 'iptv' },
                 { name: 'TBSTV', url: 'https://cdntv.tbs.seoul.kr/tbs/tbs_tv_web.smil/playlist.m3u8', type: 'iptv' },
@@ -280,7 +280,7 @@
                 { name: 'MBC_AJD', url: 'https://wowza.jejumbc.com/live/tv_jejumbc/playlist.m3u8', type: 'iptv' },
                 { name: 'MBC_ATD', url: 'https://5c3639aa99149.streamlock.net/live_TV/tv/playlist.m3u8', type: 'iptv' },
                 { name: 'KTV', url: 'https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8', type: 'iptv' },
-                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' }, 
+                { name: 'NBS', url: 'https://media.joycorp.co.kr:4443/live/ngrp:live_all/playlist.m3u8', type: 'iptv' },
                 { name: 'EBS1TV', url: 'https://ebsonair.ebs.co.kr/ebs1familypc/familypc1m/playlist.m3u8', type: 'iptv' },
                 { name: 'EBS2TV', url: 'https://ebsonair.ebs.co.kr/ebs2familypc/familypc1m/playlist.m3u8', type: 'iptv' },
                 { name: 'EBSEnglish', url: 'https://ebsonair.ebs.co.kr/plus3familypc/familypc1m/playlist.m3u8', type: 'iptv' },
@@ -310,10 +310,10 @@
                 { name: 'MNBWorld', url: 'https://cdn4.skygo.mn/live/disk1/MNB_World/HLSv3-FTA/MNB_World.m3u8', type: 'iptv' },
                 { name: 'AJE', url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8', type: 'iptv' },
                 { name: 'ABN(외국)', url: 'https://mediaserver.abnvideos.com/streams/abnafghanistan.m3u8', type: 'iptv' },
-                { name: 'PERSIANA KOREA', url: 'https://korhls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
-                { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8', type: 'iptv' }, 
+                { name: 'PERSIANA KOREA', url: 'https://korhls.persiana.live/hls/stream.m3u8', type: 'iptv' },
+                { name: 'Afghanistan', url: 'https://4afghls.persiana.live/hls/stream.m3u8', type: 'iptv' },
 
-                // Pending 채널                
+                // Pending 채널
                 { name: 'MBC_AND', url: 'https://stream.chmbc.co.kr/TV/myStream/playlist.m3u8', type: 'pending' },
                 { name: 'MBC_CTD', url: 'https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8', type: 'pending' },
                 { name: 'MBC_CXD', url: 'https://5ee9633b25727.streamlock.net/jmbc_tv/_definst_/jmbc_tv.stream/playlist.m3u8', type: 'pending' },
@@ -326,20 +326,19 @@
                 { name: 'KBS 3라디오', url: 'https://3radio.gscdn.kbs.co.kr/3radio_192_3.m3u8', type: 'pending' },
                 { name: 'KBS 1FM', url: 'https://1fm.gscdn.kbs.co.kr/1fm_192_2.m3u8', type: 'pending' },
                 { name: 'KBS 2FM', url: 'https://2fm-ad.gscdn.kbs.co.kr/2fm_ad_192_1.m3u8', type: 'pending' }
-];
+            ];
 
             const video = document.getElementById('radio-player');
             const stationList = document.getElementById('station-list');
             const nowPlaying = document.getElementById('now-playing');
             const videoWrapper = document.getElementById('video-wrapper');
-            const mainLayout = document.getElementById('main-layout'); 
-            const tabContainer = document.getElementById('tab-container'); 
-            const tabButtons = tabContainer.querySelectorAll('.tab-button'); 
-            
+            const mainLayout = document.getElementById('main-layout');
+            const tabContainer = document.getElementById('tab-container');
+            const tabButtons = tabContainer.querySelectorAll('.tab-button');
+
             let hls = new Hls();
             let currentCard = null;
-            let currentFilter = 'radio'; 
-
+            let currentFilter = 'radio';
             let touchStartX = 0;
             let touchStartY = 0;
 
@@ -350,10 +349,10 @@
                 card.textContent = station.name;
                 card.dataset.url = station.url;
                 card.dataset.name = station.name;
-                card.dataset.type = station.type; 
+                card.dataset.type = station.type;
                 stationList.appendChild(card);
             });
-            
+
             tabContainer.addEventListener('click', function(e) {
                 const button = e.target.closest('.tab-button');
                 if (button && !button.classList.contains('active')) {
@@ -364,14 +363,14 @@
                     playFirstVisibleStation();
                 }
             });
-            
+
             function filterStations(type) {
                 const allCards = stationList.querySelectorAll('.station-card');
                 allCards.forEach(card => {
                     if (card.dataset.type === type) {
-                        card.classList.add('visible'); 
+                        card.classList.add('visible');
                     } else {
-                        card.classList.remove('visible'); 
+                        card.classList.remove('visible');
                     }
                 });
             }
@@ -379,17 +378,16 @@
             stationList.addEventListener('click', function (e) {
                 const card = e.target.closest('.station-card');
                 if (card) {
-                    videoWrapper.classList.remove('initial-state'); 
+                    videoWrapper.classList.remove('initial-state');
                     const url = card.dataset.url;
                     const name = card.dataset.name;
                     videoWrapper.classList.remove('audio-only');
                     playStream(url);
                     nowPlaying.textContent = `▶ ${name}`;
-                    
                     const visibleCards = stationList.querySelectorAll('.station-card.visible');
                     visibleCards.forEach(c => c.classList.remove('active'));
                     card.classList.add('active');
-                    currentCard = card; 
+                    currentCard = card;
                 }
             });
 
@@ -405,7 +403,7 @@
                     video.play();
                 }
             }
-            
+
             video.addEventListener('playing', function() {
                 if (video.videoWidth === 0) {
                     videoWrapper.classList.add('audio-only');
@@ -416,14 +414,14 @@
 
             function changeChannel(direction) {
                 const visibleCards = Array.from(stationList.querySelectorAll('.station-card.visible'));
-                if (visibleCards.length === 0) return; 
-                
+                if (visibleCards.length === 0) return;
+
                 const lastIndex = visibleCards.length - 1;
                 let currentIndex = -1;
-                if (currentCard && visibleCards.includes(currentCard)) { 
+                if (currentCard && visibleCards.includes(currentCard)) {
                     currentIndex = visibleCards.indexOf(currentCard);
                 }
-                
+
                 let nextIndex;
                 if (direction === 'down') {
                     nextIndex = (currentIndex === -1 || currentIndex === lastIndex) ? 0 : currentIndex + 1;
@@ -433,14 +431,15 @@
                 
                 const nextCard = visibleCards[nextIndex];
                 if (nextCard) {
-                    nextCard.click(); 
+                    nextCard.click();
                     nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
                 }
             }
 
             function handleTouchStart(e) {
                 if (stationList.contains(e.target)) {
-                    touchStartX = 0; touchStartY = 0;
+                    touchStartX = 0;
+                    touchStartY = 0;
                     return;
                 }
                 touchStartX = e.touches[0].clientX;
@@ -457,29 +456,25 @@
 
                 let touchEndX = e.changedTouches[0].clientX;
                 let touchEndY = e.changedTouches[0].clientY;
-                
                 let deltaX = touchEndX - touchStartX;
-                /* --- (버그 수정) startY -> touchStartY --- */
-                let deltaY = touchEndY - touchStartY; 
-                /* -------------------------------------- */
+                let deltaY = touchEndY - touchStartY;
                 let absDeltaX = Math.abs(deltaX);
                 let absDeltaY = Math.abs(deltaY);
-                
-                const minSwipeDistance = 50; 
+                const minSwipeDistance = 50;
 
                 if (absDeltaX > absDeltaY) {
                     if (absDeltaX > minSwipeDistance) {
-                        if (deltaX > 0) { 
+                        if (deltaX > 0) {
                             video.volume = Math.min(1, video.volume + 0.1);
-                        } else { 
+                        } else {
                             video.volume = Math.max(0, video.volume - 0.1);
                         }
                     }
                 } else {
                     if (absDeltaY > minSwipeDistance) {
-                        if (deltaY > 0) { 
+                        if (deltaY > 0) {
                             changeChannel('down');
-                        } else { 
+                        } else {
                             changeChannel('up');
                         }
                     }
@@ -488,7 +483,7 @@
                 touchStartX = 0;
                 touchStartY = 0;
             }
-
+            
             document.addEventListener('keydown', function(e) {
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                     e.preventDefault();
@@ -504,7 +499,7 @@
 
             mainLayout.addEventListener('wheel', function(e) {
                 if (stationList.contains(e.target)) {
-                    return;
+                    return; 
                 }
                 e.preventDefault();
                 if (e.deltaY < 0) {
@@ -512,7 +507,7 @@
                 } else {
                     changeChannel('down');
                 }
-            }, { passive: false }); 
+            }, { passive: false });
 
             mainLayout.addEventListener('touchstart', handleTouchStart, { passive: false });
             mainLayout.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -538,12 +533,8 @@
                     nowPlaying.textContent = '방송국을 선택하세요...';
                 }
             }
-
-            /* --- (수정) 초기화 시 자동 재생 제거 --- */
-            // 페이지 로드 시 첫 탭의 방송 목록만 표시
+            
             filterStations(currentFilter);
-            // playFirstVisibleStation(); // 자동 재생 제거
-            /* ---------------------------------- */
 
         });
     </script>
